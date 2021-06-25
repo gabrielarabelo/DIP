@@ -10,23 +10,23 @@
 clear; close all; clc;
 
 % set parameters (optional):
-P = struct;
-P.camera            = 'altum';
-P.customRGB         = [4 5 2 ; 4 5 3];
-P.customMode        = true;
+parameters = struct;
+parameters.camera            = 'altum';
+parameters.customRGB         = [4 5 2 ; 4 5 3];
+parameters.customMode        = true;
 % default parameters:
-P.InitialRadius     = 0.00015;
-P.Epsilon           = 1.5 * 10^-6;
-P.GrowthFactor      = 1.002;
-P.MaximumIterations = 300;
-P.imregister_method = 'rigid'; 
+parameters.InitialRadius     = 0.00015;
+parameters.Epsilon           = 1.5 * 10^-6;
+parameters.GrowthFactor      = 1.002;
+parameters.MaximumIterations = 300;
+parameters.imregister_method = 'rigid'; 
 %
-P.ref_band_align    = 2;
+parameters.ref_band_align    = 2;
 
 
 
 % RUN
-DIP_align(P);
+DIP_align(parameters);
 
 
 

@@ -1,5 +1,4 @@
 function multiband = DIP_align(parameters)
-
 % Drone Image Processing: Align (DIP_align)
 % Multiband Images :: Align and create RGB Compositions
 % Works with: Altum & RedEdge
@@ -11,6 +10,22 @@ function multiband = DIP_align(parameters)
 % SIMOA | DESA/UFMG + Instituto Teia
 % R&D/P&D ANEEL/Cemig GT-607
 % ------------------------------------------------------ %
+
+% % set parameters (optional):
+% parameters = struct;
+% parameters.camera            = 'altum';
+% parameters.customRGB         = [4 5 2 ; 4 5 3];
+% parameters.customMode        = true;
+% % default parameters:
+% parameters.InitialRadius     = 0.00015;
+% parameters.Epsilon           = 1.5 * 10^-6;
+% parameters.GrowthFactor      = 1.002;
+% parameters.MaximumIterations = 300;
+% parameters.imregister_method = 'rigid'; 
+% %
+% parameters.ref_band_align    = 2;
+
+
 
 close all; clc
 disp('DIP-align :: ')
@@ -47,10 +62,6 @@ end
 
 try gamma_adj = P.gamma_adj;
 catch; gamma_adj = 0.6;
-end
-
-try crop_edges = P.crop_edges;
-catch; crop_edges = 50;
 end
 
 try InitialRadius = P.InitialRadius;
@@ -209,7 +220,6 @@ try (sum(class(A)=='uint8')); img_bit = 8;
 catch; try (sum(class(A)== 'uint16')); img_bit = 16; catch; end
 end
 
-%%
 
 figure('Units','normalized','Position',[0.02 0.05 0.95 0.85]);
 subplot(231)
@@ -299,30 +309,57 @@ for i = 1:5 % if the camera is Altum I ignore the 6th band anyway
 end
 disp('done.'); close all
 
+
+
 % Crop Edges
-szI = size(A1);
-A2  = A1(crop_edges:szI(1)-crop_edges,crop_edges:szI(2)-crop_edges,:);
-% output
+mcrop.top    = 1;
+mcrop.bottom = size(A1,1);
+mcrop.left   = 1;
+mcrop.right  = size(A1,2);
+
+min_val = 0.2;
+rth_val = round(size(A1,1)*min_val);
+cth_val = round(size(A1,2)*min_val);
+
+for i = 1:5
+    mb1  = A1(:,:,i);  mb1 = mb1>0;  
+    srow = sum(mb1.'); srow1 = srow>=rth_val;
+    scol = sum(mb1);   scol1 = scol>=cth_val;
+    
+    r1 = find(srow1,1,'first');
+    re = find(srow1,1,'last');
+    c1 = find(scol1,1,'first');
+    ce = find(scol1,1,'last');
+    
+    if r1>mcrop.top;    mcrop.top    = r1; end
+    if re<mcrop.bottom; mcrop.bottom = re; end
+    if c1>mcrop.left;   mcrop.left   = c1; end
+    if ce<mcrop.right;  mcrop.right  = ce; end
+end
+
+% Crop Matrix
+A2  = A1(mcrop.top:mcrop.bottom,mcrop.left:mcrop.right,:);
+
+% Assign OUTPUT
 multiband = A2;
 
+% Export Band Files
+for i = 1:nband
+    band = A2(:,:,i);
+    imwrite(band,[foldername '/' filename '.png'])
+end
 
-%%
-% ------------------------------%
-% RGB image (bands 321)
-% ------------------------------%
-band_combo = [3 2 1];
-combo_seq = num2str(band_combo); combo_seq = erase(combo_seq,' ');
-RGB = A2(:,:,1:3);
-RGB(:,:,1) = A2(:,:,band_combo(1));
-RGB(:,:,2) = A2(:,:,band_combo(2));
-RGB(:,:,3) = A2(:,:,band_combo(3));
+
 % plot
+combo_seq = '321';
 figure; imshow(RGB); pause(2)
 title([name_prefix ' (original)' ])
 % save figure
 foldername = selsavepath;
 filename = [name_prefix '_' num2str(id_rand) '_RGB-' combo_seq '_original'];
-saveas(gcf,[foldername '/' filename '.png'])
+% saveas(gcf,[foldername '/' filename '.png'])
+imwrite(RGB,[foldername '/' filename '.tif'])
+
 % plot comparison
 close all; 
 figure('Units','normalized','Position',[0.02 0.05 0.95 0.85]);
@@ -340,7 +377,8 @@ title([name_prefix ' RGB (Haze & Gamma adj.)' ])
 % save figure
 foldername = selsavepath;
 filename = [name_prefix '_' num2str(id_rand) '_RGB-' combo_seq];
-saveas(gcf,[foldername '/' filename '.png'])
+imwrite(J,[foldername '/' filename '.tif']) % Save High Resolution Tif
+% saveas(gcf,[foldername '/' filename '.png'])
 
 %-% Stretch Limits Adjustment
 J = RGB;
@@ -351,8 +389,8 @@ title([name_prefix ' ' combo_seq ' (Auto adj.)' ])
 % save figure
 foldername = selsavepath;
 filename = [name_prefix '_' num2str(id_rand) '_AutoAdj_RGB-' combo_seq];
-saveas(gcf,[foldername '/' filename '.png'])
-
+imwrite(J,[foldername '/' filename '.tif']) % Save High Resolution Tif
+% saveas(gcf,[foldername '/' filename '.png'])
 
 % ------------------------------%
 % Custom RGB combinations
@@ -373,8 +411,8 @@ if ~isempty(customRGB)
         % save figure
         foldername = selsavepath;
         filename = [name_prefix '_' num2str(id_rand) '_RGB-' combo_seq '_original'];
-        saveas(gcf,[foldername '/' filename '.png'])
-        
+        imwrite(RGB_custom,[foldername '/' filename '.tif']) % Save High Resolution Tif
+        %    saveas(gcf,[foldername '/' filename '.png'])
         %-% Stretch Limits Adjustment
         J = RGB_custom;
         J = imadjust(J,stretchlim(J));
@@ -384,8 +422,8 @@ if ~isempty(customRGB)
         % save figure
         foldername = selsavepath;
         filename = [name_prefix '_' num2str(id_rand) '_RGB-' combo_seq];
-        saveas(gcf,[foldername '/' filename '.png'])
-        
+        imwrite(J,[foldername '/' filename '.tif']) % Save High Resolution Tif
+        %     saveas(gcf,[foldername '/' filename '.png'])
         %     %-% Haze & Gamma Adjust
         %     J = RGB_custom;
         %     J = imreducehaze(J,haze_adj,'method',haze_adj_method);
@@ -428,7 +466,6 @@ if customMode
         aw   = answer{1};
         aw   = erase(aw,' '); aw = erase(aw,','); aw = erase(aw,'-');
         
-
         band_combo    = zeros(3,1);
         band_combo(1) = str2double(aw(1));
         band_combo(2) = str2double(aw(2));
@@ -445,8 +482,9 @@ if customMode
         % save figure
         foldername = selsavepath;
         filename = [name_prefix '_' num2str(id_rand) '-' num2str(cmtic) '_RGB-' combo_seq '_original'];
-        saveas(gcf,[foldername '/' filename '.png'])
-
+        imwrite(RGB_custom,[foldername '/' filename '.png']) % Save High Resolution Tif
+%         saveas(gcf,[foldername '/' filename '.png'])    
+        
         %-% Stretch Limit Adjust
         J = RGB_custom;
         J = imadjust(J,stretchlim(J));
@@ -456,7 +494,8 @@ if customMode
         % save figure
         foldername = selsavepath;
         filename = [name_prefix '_' num2str(id_rand) '_RGB-' combo_seq];
-        saveas(gcf,[foldername '/' filename '.png'])
+        imwrite(J,[foldername '/' filename '.png']) % Save High Resolution Tif
+%         saveas(gcf,[foldername '/' filename '.png'])
         
         % plot
         figure; imshow(RGB_custom);
@@ -479,6 +518,7 @@ close all
 disp('all done.');
 disp(['check your files on: ' selsavepath])
 close all;
+
 
 end
 
