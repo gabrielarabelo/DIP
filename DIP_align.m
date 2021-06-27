@@ -1,7 +1,8 @@
 function multiband = DIP_align(parameters)
+%%
 % Drone Image Processing: Align (DIP_align)
 % Multiband Images :: Align and create RGB Compositions
-% Works with: Altum & RedEdge
+% Tested with: Altum & RedEdge
 % ------------------------------------------------------ %
 % Author:
 % Gabriela Rabelo Andrade 
@@ -11,20 +12,20 @@ function multiband = DIP_align(parameters)
 % R&D/P&D ANEEL/Cemig GT-607
 % ------------------------------------------------------ %
 
-% % set parameters (optional):
-% parameters = struct;
-% parameters.camera            = 'altum';
-% parameters.customRGB         = [4 5 2 ; 4 5 3];
-% parameters.customMode        = true;
-% % default parameters:
-% parameters.InitialRadius     = 0.00015;
-% parameters.Epsilon           = 1.5 * 10^-6;
-% parameters.GrowthFactor      = 1.002;
-% parameters.MaximumIterations = 300;
-% parameters.imregister_method = 'rigid'; 
-% %
-% parameters.ref_band_align    = 2;
-
+% % set parameters (example):
+parameters = struct;
+parameters.camera            = 'altum';
+parameters.nband             = 6;
+parameters.customRGB         = [4 5 2 ; 5 4 3; 5 2 1];
+parameters.customMode        = true;
+% default parameters:
+parameters.InitialRadius     = 0.00015;
+parameters.Epsilon           = 1.5 * 10^-6;
+parameters.GrowthFactor      = 1.002;
+parameters.MaximumIterations = 300;
+parameters.imregister_method = 'rigid'; 
+%
+parameters.ref_band_align    = 2;
 
 
 close all; clc
@@ -32,20 +33,10 @@ disp('DIP-align :: ')
 disp('ready to start!')
 
 P = parameters;
-try
-    if     strcmp(P.camera,'Altum');    altum   = 1; rededge = 0;
-    elseif strcmp(P.camera,'altum');    altum   = 1; rededge = 0;
-    elseif strcmp(P.camera,'RedEdge');  rededge = 1; altum   = 0;
-    elseif strcmp(P.camera,'rededge');  rededge = 1; altum   = 0;
-    elseif strcmp(P.camera,'Red Edge'); rededge = 1; altum   = 0;
-    elseif strcmp(P.camera,'red edge'); rededge = 1; altum   = 0;
-    end
-catch
-    disp('parameters.camera :: alternatives are [altum] or [rededge]');
-    disp('obs: must be a string');
-    disp('the camera was set to rededge');
-    disp('-----------------------------');
-    rededge = 1; altum = 0;
+
+
+try nband = P.nband;
+catch; nband = 2; disp('[nband] not set');
 end
 
 try scale = P.scale;
@@ -89,12 +80,54 @@ catch; ref_band_align = 2; disp('[ref_band_align] set to default')
 end
 
 try customRGB = P.customRGB;
-catch; customRGB = []; % customRGB = [4 5 2];
+catch; customRGB = [];
 end
 
 try customMode = P.customMode;
 catch; customMode = true;
 end
+
+try RGB_bands = P.RGB_bands;
+catch; RGB_bands = [3 2 1];
+end
+
+try camera = P.camera;
+    if     strcmp(P.camera,'Altum');    camera = 'altum';
+    elseif strcmp(P.camera,'altum');    camera = 'altum';
+    elseif strcmp(P.camera,'RedEdge');  camera = 'rededge';
+    elseif strcmp(P.camera,'rededge');  camera = 'rededge';
+    elseif strcmp(P.camera,'Red Edge'); camera = 'rededge';
+    elseif strcmp(P.camera,'red edge'); camera = 'rededge';
+    end
+catch
+    disp('-----------------------------');
+end
+
+try band_specs = P.band_specs;
+catch
+    if strcmp(camera,'altum')
+        band_specs  = {'Blue (475nm 32nm)'; ...
+            'Green (560nm 27nm)';...
+            'Red (668nm 14nm)';...
+            'Red Edge (717nm 12nm)';...
+            'Near-IR (842nm 57nm)';...
+            'LWIR Thermal IR (8-14um)' ...
+            };
+        skip_bands = [6];
+    elseif strcmp(camera,'rededge')
+        band_specs  = {'Blue (475nm 32nm)'; ...
+            'Green (560nm 27nm)';...
+            'Red (668nm 14nm)';...
+            'Red Edge (717nm 12nm)';...
+            'Near-IR (842nm 57nm)';...
+            };
+    else
+        band_specs = cell(nband,1);
+        for i = 1:nband; band_specs{i} = []; end
+    end
+ 
+end
+
 
 % % Optimizer Presets
 % opt_preset = cell(2,1);
@@ -122,7 +155,11 @@ clc; disp(msg);
 % select export folder
 msg = 'Select Export Folder';
 clc; disp(msg);
-selsavepath = uigetdir(path,msg);
+usavepath = uigetdir(path,msg);
+usavepath_proc = [usavepath '/' 'process'] ;
+% usavepath_lowr = [usavepath '/' 'low-res'] ;
+mkdir(usavepath_proc)
+% mkdir(usavepath_lowr)
 % custom export file name
 msg = 'Create a Custom Prefix for the File Name';
 clc; disp(msg);
@@ -140,26 +177,8 @@ optimizer.InitialRadius = InitialRadius;
 optimizer.Epsilon       = Epsilon;
 optimizer.GrowthFactor  = GrowthFactor;
 optimizer.MaximumIterations = MaximumIterations;
-% get number of bands
-if altum;   nband = 6; end
-if rededge; nband = 5; end 
-% get band specs
-if altum
-band_specs  = {'Blue (475nm 32nm)'; ...
-               'Green (560nm 27nm)';...
-               'Red (668nm 14nm)';...
-               'Red Edge (717nm 12nm)';...
-               'Near-IR (842nm 57nm)';...
-               'LWIR Thermal IR (8-14um)' ...
-                };
-elseif rededge
-band_specs  = {'Blue (475nm 32nm)'; ...
-               'Green (560nm 27nm)';...
-               'Red (668nm 14nm)';...
-               'Red Edge (717nm 12nm)';...
-               'Near-IR (842nm 57nm)';...
-                }; 
-end
+
+
 % disp('Band Specifications')
 % disp(band_specs)
 
@@ -182,13 +201,26 @@ adj_filename = erase(file_name,'_');
 
 % IMPORT BAND IMAGES
 disp('importing images...');
-B1 = imread([file_path  [file_name '_1' '.tif'] ]);
-B2 = imread([file_path  [file_name '_2' '.tif'] ]);
-B3 = imread([file_path  [file_name '_3' '.tif'] ]);
-B4 = imread([file_path  [file_name '_4' '.tif'] ]);
-B5 = imread([file_path  [file_name '_5' '.tif'] ]);
-if altum; B6 = imread([file_path  [file_name '_6' '.tif'] ]); end
+
+B = cell(nband,1);
+for i = 1:nband
+    B{i} = imread([file_path  [file_name '_' num2str(i) '.tif'] ]);
+end
+
+% Resize some bands if they are smaller than the others
+img_sz = size(B{1});
+for i = 1:nband
+    if size(B{i}) ~= img_sz
+        B{i} = imresize(B{i},'OutputSize',[img_sz(1) img_sz(2)]);
+    end
+end
+
 disp('done.');
+
+ALLBAND = zeros(img_sz(1),img_sz(2),nband);
+for i = 1:nband
+    ALLBAND(:,:,i) = B{i};
+end
 
 % get file info (date and hour the picture was taken)
 fileInfo = dir([file_path  [file_name '_1' '.tif'] ]);
@@ -197,16 +229,7 @@ fileInfo = dir([file_path  [file_name '_1' '.tif'] ]);
 name_prefix  = [answer{1,1} '-' num2str(fY) '-' num2str(fM) '-' num2str(fD) ...
            ' - ' adj_filename];
 
-% Resize the 6th band (Thermal), which is smaller than the other
-if altum; B6 = imresize(B6,'OutputSize',[size(B1,1) size(B1,2)]); end
 
-ALLBAND = zeros(size(B1,1),size(B1,2),nband);
-ALLBAND(:,:,1) = B1;
-ALLBAND(:,:,2) = B2;
-ALLBAND(:,:,3) = B3;
-ALLBAND(:,:,4) = B4;
-ALLBAND(:,:,5) = B5;
-if altum; ALLBAND(:,:,6) = B6; end
 
 % Apply Scale Factor
 disp('resizing image...')
@@ -222,37 +245,23 @@ end
 
 
 figure('Units','normalized','Position',[0.02 0.05 0.95 0.85]);
-subplot(231)
-imshow(B1); title(['B1 - ' band_specs{1}])
 
-subplot(232)
-imshow(B2); title(['B2 - ' band_specs{2}])
-
-subplot(233)
-imshow(B3); title(['B3 - ' band_specs{3}])
-
-subplot(234)
-imshow(B4); title(['B4 - ' band_specs{4}])
-
-subplot(235)
-imshow(B5); title(['B5 - ' band_specs{5}])
-
-if altum
-subplot(236)
-imshow(B6); title(['B6 - ' band_specs{6}])
+for i = 1:min(6,nband)
+    subplot(2,3,i)
+    imshow(B{i}); title(['B' num2str(i) ' - ' band_specs{1}])
 end
 
 % Save figure
-foldername = selsavepath;
+foldername = usavepath_proc;
 filename = [name_prefix '_' num2str(id_rand) '_bands'];
 saveas(gcf,[foldername '/' filename '.png'])
 pause(2)
 
 % Plot RGB - before alignment (for comparison)
 RGB = A(:,:,1:3);
-RGB(:,:,1) = A(:,:,3);
-RGB(:,:,2) = A(:,:,2);
-RGB(:,:,3) = A(:,:,1);
+RGB(:,:,1) = A(:,:,RGB_bands(1));
+RGB(:,:,2) = A(:,:,RGB_bands(2));
+RGB(:,:,3) = A(:,:,RGB_bands(3));
 RGB_before = RGB;
 
 figure; imshow(RGB);
@@ -260,16 +269,15 @@ title([name_prefix ' (before alignment)' ])
 pause(2)
 
 % save figure
-foldername = selsavepath;
+foldername = usavepath_proc;
 filename = [name_prefix '_' num2str(id_rand) '_RGB-321_before_align'];
 saveas(gcf,[foldername '/' filename '.png'])
-
 
 % FIX REGISTRY
 A1 = A;
 fixed = A(:,:,ref_band_align);
 
-for i = 1:5 % if the camera is Altum I ignore the 6th band anyway
+for i = 1:nband 
     if ref_band_align ~= i
         disp([num2str(ref_band_align) ' & ' num2str(i)]); % display progress
         moving = A(:,:,i);
@@ -310,14 +318,14 @@ end
 disp('done.'); close all
 
 
-
 % Crop Edges
 mcrop.top    = 1;
 mcrop.bottom = size(A1,1);
 mcrop.left   = 1;
 mcrop.right  = size(A1,2);
 
-min_val = 0.2;
+min_val     = 0.2;
+safe_margin = 10;
 rth_val = round(size(A1,1)*min_val);
 cth_val = round(size(A1,2)*min_val);
 
@@ -337,28 +345,41 @@ for i = 1:5
     if ce<mcrop.right;  mcrop.right  = ce; end
 end
 
+mcrop.top    = mcrop.top    + safe_margin;
+mcrop.bottom = mcrop.bottom - safe_margin;
+mcrop.left   = mcrop.left   + safe_margin;
+mcrop.right  = mcrop.right  - safe_margin;
+
 % Crop Matrix
 A2  = A1(mcrop.top:mcrop.bottom,mcrop.left:mcrop.right,:);
 
 % Assign OUTPUT
 multiband = A2;
-
+filename = [name_prefix '_' num2str(id_rand) '_multiband'];
+save([foldername '/' filename '.mat'], 'multiband','-v7.3') % Save Multiband
 % Export Band Files
+foldername = usavepath_proc;
 for i = 1:nband
     band = A2(:,:,i);
+    filename   = [name_prefix '_' num2str(id_rand) '_' num2str(i)];
     imwrite(band,[foldername '/' filename '.png'])
 end
 
+% Plot RGB - after alignment (for comparison)
+RGB = A2(:,:,1:3);
+RGB(:,:,1) = A2(:,:,RGB_bands(1));
+RGB(:,:,2) = A2(:,:,RGB_bands(2));
+RGB(:,:,3) = A2(:,:,RGB_bands(3));
 
 % plot
-combo_seq = '321';
+combo_seq = erase(num2str(RGB_bands),' ');
 figure; imshow(RGB); pause(2)
 title([name_prefix ' (original)' ])
 % save figure
-foldername = selsavepath;
+foldername = usavepath;
 filename = [name_prefix '_' num2str(id_rand) '_RGB-' combo_seq '_original'];
-% saveas(gcf,[foldername '/' filename '.png'])
 imwrite(RGB,[foldername '/' filename '.tif'])
+% saveas(gcf,[foldername '/' filename '.png'])
 
 % plot comparison
 close all; 
@@ -375,7 +396,7 @@ J = imadjust(J,[],[],gamma_adj);
 figure; imshow(J);
 title([name_prefix ' RGB (Haze & Gamma adj.)' ])
 % save figure
-foldername = selsavepath;
+foldername = usavepath;
 filename = [name_prefix '_' num2str(id_rand) '_RGB-' combo_seq];
 imwrite(J,[foldername '/' filename '.tif']) % Save High Resolution Tif
 % saveas(gcf,[foldername '/' filename '.png'])
@@ -387,7 +408,7 @@ J = imadjust(J,stretchlim(J));
 figure; imshow(J);
 title([name_prefix ' ' combo_seq ' (Auto adj.)' ])
 % save figure
-foldername = selsavepath;
+foldername = usavepath;
 filename = [name_prefix '_' num2str(id_rand) '_AutoAdj_RGB-' combo_seq];
 imwrite(J,[foldername '/' filename '.tif']) % Save High Resolution Tif
 % saveas(gcf,[foldername '/' filename '.png'])
@@ -409,7 +430,7 @@ if ~isempty(customRGB)
         figure; imshow(RGB_custom);
         title([name_prefix ' ' combo_seq ' (original)' ])
         % save figure
-        foldername = selsavepath;
+        foldername = usavepath;
         filename = [name_prefix '_' num2str(id_rand) '_RGB-' combo_seq '_original'];
         imwrite(RGB_custom,[foldername '/' filename '.tif']) % Save High Resolution Tif
         %    saveas(gcf,[foldername '/' filename '.png'])
@@ -420,7 +441,7 @@ if ~isempty(customRGB)
         figure; imshow(J);
         title([name_prefix ' ' combo_seq ' (Auto adj.)' ])
         % save figure
-        foldername = selsavepath;
+        foldername = usavepath;
         filename = [name_prefix '_' num2str(id_rand) '_RGB-' combo_seq];
         imwrite(J,[foldername '/' filename '.tif']) % Save High Resolution Tif
         %     saveas(gcf,[foldername '/' filename '.png'])
@@ -428,11 +449,13 @@ if ~isempty(customRGB)
         %     J = RGB_custom;
         %     J = imreducehaze(J,haze_adj,'method',haze_adj_method);
         %     J = imadjust(J,[],[],gamma_adj);
+        
+        close all;
     end
 end
 
 disp('done.');
-disp(['check your files on: ' selsavepath])
+disp(['check your files on: ' usavepath])
 
 
 % ---------------------------------------- %
@@ -450,12 +473,10 @@ if customMode
     while cmON == true
         close all
         figure('Units','normalized','Position',[0.02 0.05 0.95 0.85]);
-        subplot(231); imshow(B1); title(['B1 - ' band_specs{1}])
-        subplot(232); imshow(B2); title(['B2 - ' band_specs{2}])
-        subplot(233); imshow(B3); title(['B3 - ' band_specs{3}])
-        subplot(234); imshow(B4); title(['B4 - ' band_specs{4}])
-        subplot(235); imshow(B5); title(['B5 - ' band_specs{5}])
-        if altum; subplot(236); imshow(B6); title(['B6 - ' band_specs{6}]); end
+        for i = 1:min(6,nband)
+            subplot(2,3,i)
+            imshow(B{i}); title(['B' num2str(i) ' - ' band_specs{1}])
+        end
         % update count
         cmtic = cmtic+1;
         % custom export file name
@@ -463,7 +484,7 @@ if customMode
         clc; disp(msg);
         prompt = ['Enter 3 Bands for RGB Composition: [1 to ' num2str(nband) '] example: 321'];
         answer = inputdlg(prompt);
-        aw   = answer{1};
+        try aw = answer{1}; catch; return; end
         aw   = erase(aw,' '); aw = erase(aw,','); aw = erase(aw,'-');
         
         band_combo    = zeros(3,1);
@@ -480,7 +501,7 @@ if customMode
         figure; imshow(RGB_custom);
         title([name_prefix ' ' combo_seq ' (original)' ])
         % save figure
-        foldername = selsavepath;
+        foldername = usavepath;
         filename = [name_prefix '_' num2str(id_rand) '-' num2str(cmtic) '_RGB-' combo_seq '_original'];
         imwrite(RGB_custom,[foldername '/' filename '.png']) % Save High Resolution Tif
 %         saveas(gcf,[foldername '/' filename '.png'])    
@@ -492,7 +513,7 @@ if customMode
         figure; imshow(J);
         title([name_prefix ' ' combo_seq ' (StretchLim adj.)' ])
         % save figure
-        foldername = selsavepath;
+        foldername = usavepath;
         filename = [name_prefix '_' num2str(id_rand) '_RGB-' combo_seq];
         imwrite(J,[foldername '/' filename '.png']) % Save High Resolution Tif
 %         saveas(gcf,[foldername '/' filename '.png'])
@@ -516,9 +537,9 @@ end
 % ---------------------------------------- %
 close all
 disp('all done.');
-disp(['check your files on: ' selsavepath])
+disp(['check your files on: ' usavepath])
 close all;
 
-
+%%
 end
 

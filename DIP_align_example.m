@@ -12,7 +12,8 @@ clear; close all; clc;
 % set parameters (optional):
 parameters = struct;
 parameters.camera            = 'altum';
-parameters.customRGB         = [4 5 2 ; 4 5 3];
+parameters.nband             = 6;
+parameters.customRGB         = [4 5 2 ; 5 4 3; 5 2 1; 4 2 1; 5 4 1];
 parameters.customMode        = true;
 % default parameters:
 parameters.InitialRadius     = 0.00015;
