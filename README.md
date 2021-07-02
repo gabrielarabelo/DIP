@@ -118,21 +118,37 @@ Bands to be ignored during the image alignment (to be used with bands which the 
 The input parameters should be declared the variable fields of the struct of type, as follows:
 
 parameters.nband
+
 parameters.camera
+
 parameters.band_specs
+
 parameters.RGB_bands
+
 parameters.customRGB
+
 parameters.customMode
+
 parameters.InitialRadius
+
 parameters.Epsilon
+
 parameters.GrowthFactor
+
 parameters.MaximumIterations
+
 parameters.imregister_method
+
 parameters.ref_band_align
+
 parameters.scale
+
 parameters.haze_adj
+
 parameters.haze_adj_method
+
 parameters.gamma_adj
+
 parameters.skip_bands
 
 
