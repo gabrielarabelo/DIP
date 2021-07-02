@@ -1,6 +1,6 @@
-function multiband = DIP_align(parameters)
-%%
-% Drone Image Processing: Align (DIP_align)
+function DIP_align(parameters)
+
+% Drone Image Processing: Align (DIP_align) & RGB (DIP-RGB)
 % Multiband Images :: Align and create RGB Compositions
 % Tested with: Altum & RedEdge
 % ------------------------------------------------------ %
@@ -13,30 +13,96 @@ function multiband = DIP_align(parameters)
 % ------------------------------------------------------ %
 
 % % set parameters (example):
-parameters = struct;
-parameters.camera            = 'altum';
-parameters.nband             = 6;
-parameters.customRGB         = [4 5 2 ; 5 4 3; 5 2 1];
-parameters.customMode        = true;
-% default parameters:
-parameters.InitialRadius     = 0.00015;
-parameters.Epsilon           = 1.5 * 10^-6;
-parameters.GrowthFactor      = 1.002;
-parameters.MaximumIterations = 300;
-parameters.imregister_method = 'rigid'; 
-%
-parameters.ref_band_align    = 2;
+% parameters = struct;
+% parameters.nband             = 6;
+% %-% set other parameters (optional)
+% parameters.camera            = 'altum';
+% parameters.customRGB         = [4 5 2 ; 5 4 3];
+% parameters.customMode        = true;
+% %-% set parameters for alignment (optional):
+% parameters.InitialRadius     = 0.00015;
+% parameters.Epsilon           = 1.5 * 10^-6;
+% parameters.GrowthFactor      = 1.002;
+% parameters.MaximumIterations = 300;
+% parameters.imregister_method = 'rigid'; 
+% parameters.ref_band_align    = 2;
 
 
 close all; clc
 disp('DIP-align :: ')
 disp('ready to start!')
 
-P = parameters;
+if (nargin==1); P = parameters;
+    try nband = P.nband;
+    catch; nband = []; disp('[nband] not set');
+    end
+else; P = struct;
+    nband = [];
+end
 
 
-try nband = P.nband;
-catch; nband = 2; disp('[nband] not set');
+% ------------------------------------------------------ %
+% Start GUI
+% ------------------------------------------------------ %
+% select file
+msg = 'Select File (only one band required)';
+clc; disp(msg);
+[file,path] = uigetfile('*.*', msg);
+% select export folder
+msg = 'Select Export Folder';
+clc; disp(msg);
+usavepath = uigetdir(path,msg);
+usavepath_proc = [usavepath '/' 'process'] ;
+mkdir(usavepath_proc)
+% usavepath_lowr = [usavepath '/' 'low-res'] ;
+% mkdir(usavepath_lowr)
+% custom export file name
+msg = 'Create a Custom Prefix for the File Name';
+clc; disp(msg);
+prompt = ['Custom File Name Prefix: [' path file ']'];
+answer = inputdlg(prompt,'s');
+if isempty(answer{1}); answer{1} = 'IMG'; end
+
+% ------------------------------------------------------ %
+% Import Images
+% ------------------------------------------------------ %
+% FIND MULTIBAND FILE PREFIX:
+file_path = path;
+
+try file_name = extractBefore(file,'_1.tif');catch
+    
+    for i = 1:50
+        try file_name = extractBefore(file,['_' num2str(i) '.tif']);
+        catch; disp('other bands could not be found.')
+        end
+    end
+    
+end
+adj_filename = erase(file_name,'_');
+
+% IMPORT BAND IMAGES
+disp('importing images...');
+B = cell(2,1);
+search_bands = true;
+if isempty(nband)
+   nband = 0;
+    try
+        while search_bands
+            nband = nband+1; disp(['nband = ' num2str(nband)])
+            i = nband;
+            try B{i} = imread([file_path  [file_name '_' num2str(i) '.tif'] ]);
+            catch
+                nband = nband-1;
+                search_bands = false;
+            end
+        end
+    catch
+    end
+else
+    B = cell(nband,1);
+    for i = 1:nband
+        B{i} = imread([file_path  [file_name '_' num2str(i) '.tif'] ]);
+    end
 end
 
 try scale = P.scale;
@@ -91,6 +157,10 @@ try RGB_bands = P.RGB_bands;
 catch; RGB_bands = [3 2 1];
 end
 
+try skip_bands = P.skip_bands;
+catch; skip_bands = [];
+end
+
 try camera = P.camera;
     if     strcmp(P.camera,'Altum');    camera = 'altum';
     elseif strcmp(P.camera,'altum');    camera = 'altum';
@@ -100,7 +170,7 @@ try camera = P.camera;
     elseif strcmp(P.camera,'red edge'); camera = 'rededge';
     end
 catch
-    disp('-----------------------------');
+    camera = ' ';
 end
 
 try band_specs = P.band_specs;
@@ -113,7 +183,13 @@ catch
             'Near-IR (842nm 57nm)';...
             'LWIR Thermal IR (8-14um)' ...
             };
-        skip_bands = [6];
+        % skip band 6 on altum
+        if isempty(skip_bands)
+            skip_bands = 6;
+        elseif ~ismember(6, skip_bands) 
+            try skip_bands = [skip_bands 6]; catch; skip_bands = [skip_bands ; 6]; end
+        end
+        
     elseif strcmp(camera,'rededge')
         band_specs  = {'Blue (475nm 32nm)'; ...
             'Green (560nm 27nm)';...
@@ -145,67 +221,18 @@ end
 % opt_preset{2}.MaximumIterations = 300;
 % opt_preset{2}.imregister_method = 'rigid'; 
 
-% ------------------------------------------------------ %
-% Start GUI
-% ------------------------------------------------------ %
-% select file
-msg = 'Select File (only one band required)';
-clc; disp(msg);
-[file,path] = uigetfile('*.*', msg);
-% select export folder
-msg = 'Select Export Folder';
-clc; disp(msg);
-usavepath = uigetdir(path,msg);
-usavepath_proc = [usavepath '/' 'process'] ;
-% usavepath_lowr = [usavepath '/' 'low-res'] ;
-mkdir(usavepath_proc)
-% mkdir(usavepath_lowr)
-% custom export file name
-msg = 'Create a Custom Prefix for the File Name';
-clc; disp(msg);
-prompt = ['Custom File Name Prefix: [' path file ']'];
-answer = inputdlg(prompt,'s');
-if isempty(answer{1}); answer{1} = 'IMG'; end
+
 
 % INIT SOME STUFF
 % Generate random id to label files (just to avoid replacing images)
 id_rand = round(now*1000);
 % Setup Image Align Optimizer
-% (these parameters worked for most of my images)
 [optimizer, metric]     = imregconfig('multimodal');
 optimizer.InitialRadius = InitialRadius;
 optimizer.Epsilon       = Epsilon;
 optimizer.GrowthFactor  = GrowthFactor;
 optimizer.MaximumIterations = MaximumIterations;
 
-
-% disp('Band Specifications')
-% disp(band_specs)
-
-% FIND MULTIBAND FILE PREFIX:
-file_path = path;
-try file_name = extractBefore(file,'_1.tif');catch
-    try file_name = extractBefore(file,'_2.tif'); catch
-        try file_name = extractBefore(file,'_3.tif'); catch
-            try file_name = extractBefore(file,'_4.tif'); catch
-                try file_name = extractBefore(file,'_5.tif'); catch
-                    try file_name = extractBefore(file,'_6.tif'); catch
-                    end
-                end
-            end
-        end
-    end
-end
-adj_filename = erase(file_name,'_');
-
-
-% IMPORT BAND IMAGES
-disp('importing images...');
-
-B = cell(nband,1);
-for i = 1:nband
-    B{i} = imread([file_path  [file_name '_' num2str(i) '.tif'] ]);
-end
 
 % Resize some bands if they are smaller than the others
 img_sz = size(B{1});
@@ -278,7 +305,7 @@ A1 = A;
 fixed = A(:,:,ref_band_align);
 
 for i = 1:nband 
-    if ref_band_align ~= i
+    if ref_band_align ~= i && ~ismember(i, skip_bands)
         disp([num2str(ref_band_align) ' & ' num2str(i)]); % display progress
         moving = A(:,:,i);
 
@@ -315,7 +342,7 @@ for i = 1:nband
         pause(2)
     end
 end
-disp('done.'); close all
+disp('done.');
 
 
 % Crop Edges
@@ -427,7 +454,7 @@ if ~isempty(customRGB)
         RGB_custom(:,:,2) = A2(:,:,band_combo(2));
         RGB_custom(:,:,3) = A2(:,:,band_combo(3));
         % plot
-        figure; imshow(RGB_custom);
+        figure; imshow(RGB_custom); pause(2)
         title([name_prefix ' ' combo_seq ' (original)' ])
         % save figure
         foldername = usavepath;
@@ -438,7 +465,7 @@ if ~isempty(customRGB)
         J = RGB_custom;
         J = imadjust(J,stretchlim(J));
         % plot
-        figure; imshow(J);
+        figure; imshow(J); pause(2)
         title([name_prefix ' ' combo_seq ' (Auto adj.)' ])
         % save figure
         foldername = usavepath;
@@ -498,7 +525,7 @@ if customMode
         RGB_custom(:,:,2) = A2(:,:,band_combo(2));
         RGB_custom(:,:,3) = A2(:,:,band_combo(3));
         % plot
-        figure; imshow(RGB_custom);
+        figure; imshow(RGB_custom); pause(2)
         title([name_prefix ' ' combo_seq ' (original)' ])
         % save figure
         foldername = usavepath;
@@ -510,7 +537,7 @@ if customMode
         J = RGB_custom;
         J = imadjust(J,stretchlim(J));
         % plot
-        figure; imshow(J);
+        figure; imshow(J); pause(2)
         title([name_prefix ' ' combo_seq ' (StretchLim adj.)' ])
         % save figure
         foldername = usavepath;
@@ -519,7 +546,7 @@ if customMode
 %         saveas(gcf,[foldername '/' filename '.png'])
         
         % plot
-        figure; imshow(RGB_custom);
+        figure; imshow(RGB_custom); pause(2)
         title([name_prefix ' ' combo_seq ' (original)' ])
         
         % check if the user wants to continue
@@ -540,6 +567,7 @@ disp('all done.');
 disp(['check your files on: ' usavepath])
 close all;
 
-%%
+
+
 end
 

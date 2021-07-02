@@ -1,43 +1,37 @@
-% DIP-align :: example
 % Drone Image Processing: Align (DIP_align)
-% Multiband Images :: Align and create RGB Compositions
-% Works with: Altum & RedEdge
+% Align and create RGB Compositions from Multispectral Images
+% Tested with: Micasense Altum & RedEdge
 % ------------------------------------------------------ %
-% Gabriela Rabelo Andrade 
-% gabrielarabelo@gmail.com
+% Gabriela Rabelo Andrade | gabrielarabelo@gmail.com
+% Camila Costa de Amorim
 % ------------------------------------------------------ %
-% start fresh
+
+% start fresh (optional)
 clear; close all; clc;
 
-% set parameters (optional):
+% optional parameters:
 parameters = struct;
-parameters.camera            = 'altum';
 parameters.nband             = 6;
-parameters.customRGB         = [4 5 2 ; 5 4 3; 5 2 1; 4 2 1; 5 4 1];
+parameters.camera            = 'altum';
+parameters.customRGB         = [4 5 2];
 parameters.customMode        = true;
-% default parameters:
-parameters.InitialRadius     = 0.00015;
-parameters.Epsilon           = 1.5 * 10^-6;
-parameters.GrowthFactor      = 1.002;
-parameters.MaximumIterations = 300;
-parameters.imregister_method = 'rigid'; 
-%
-parameters.ref_band_align    = 2;
+% %-% alignment parameters (optional):
+% parameters.InitialRadius     = 0.00015;
+% parameters.Epsilon           = 1.5 * 10^-6;
+% parameters.GrowthFactor      = 1.002;
+% parameters.MaximumIterations = 300;
+% parameters.imregister_method = 'rigid'; 
+% parameters.ref_band_align    = 2;
+% parameters.scale             = 1;
+% parameters.haze_adj          = 0.7;
+% parameters.haze_adj_method   = 'approxdcp';
+% parameters.gamma_adj         = 0.6;
+% parameters.skip_bands        = [];
 
-
-
+% ------------------------------------------------------ %
 % RUN
 DIP_align(parameters);
-
-
-
-
-
-
-
-
-
-
+% ------------------------------------------------------ %
 
 
 
