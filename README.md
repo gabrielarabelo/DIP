@@ -116,6 +116,7 @@ Bands to be ignored during the image alignment (to be used with bands which the 
 
 
 the input parameters Should be declared the variable fields of the struct of type, as follows:
+
 parameters.nband
 parameters.camera
 parameters.band_specs
