@@ -142,10 +142,16 @@ The user will first be prompted to select one band of the multispectral image to
 The user will then be prompted to select a folder to save the output files.
 The user will then be prompted to enter a custom name prefix for the output images that will be exported.
 After that, the program will perform the image registration alignment and the program will plot the following:
+
 • RGB image before the image registration;
+
 • Before and After of the bands of the image being aligned;
+
 • RGB image after the image registration;
 
+
 The program will then plot and save high-resolution images of the RGB Compositions in the following sequence: Regular RGB; Haze & Gamma Adjusted RGB; Stretch Limits Adjusted RGB.
+
 After that, in case the user selected the Custom Mode, the user will be prompted to enter any band combinations to generate other custom RGB compositions.
+
 Finally, all the high-resolution images will be saved in the output folder.
