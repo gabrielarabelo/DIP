@@ -8,6 +8,7 @@ doi:********************
 
 Author:
 Gabriela Rabelo Andrade | gabrielarabelo@gmail.com
+
 Contributor:
 Camila Costa de Amorim
 
