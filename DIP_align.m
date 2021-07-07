@@ -48,6 +48,8 @@ end
 msg = 'Select File (only one band required)';
 clc; disp(msg);
 [file,path] = uigetfile('*.*', msg);
+% Find Image Type
+ftype = extractAfter(file,'.');
 % select export folder
 msg = 'Select Export Folder';
 clc; disp(msg);
@@ -69,10 +71,10 @@ if isempty(answer{1}); answer{1} = 'IMG'; end
 % FIND MULTIBAND FILE PREFIX:
 file_path = path;
 
-try file_name = extractBefore(file,'_1.tif');catch
+try file_name = extractBefore(file,['_1.' ftype]);catch
     
     for i = 1:50
-        try file_name = extractBefore(file,['_' num2str(i) '.tif']);
+        try file_name = extractBefore(file,['_' num2str(i) '.' ftype]);
         catch; disp('other bands could not be found.')
         end
     end
@@ -90,7 +92,7 @@ if isempty(nband)
         while search_bands
             nband = nband+1; disp(['nband = ' num2str(nband)])
             i = nband;
-            try B{i} = imread([file_path  [file_name '_' num2str(i) '.tif'] ]);
+            try B{i} = imread([file_path  [file_name '_' num2str(i) '.' ftype] ]);
             catch
                 nband = nband-1;
                 search_bands = false;
@@ -101,7 +103,7 @@ if isempty(nband)
 else
     B = cell(nband,1);
     for i = 1:nband
-        B{i} = imread([file_path  [file_name '_' num2str(i) '.tif'] ]);
+        B{i} = imread([file_path  [file_name '_' num2str(i) '.' ftype] ]);
     end
 end
 
@@ -250,7 +252,7 @@ for i = 1:nband
 end
 
 % get file info (date and hour the picture was taken)
-fileInfo = dir([file_path  [file_name '_1' '.tif'] ]);
+fileInfo = dir([file_path  [file_name '_1' '.' ftype] ]);
 [fY, fM, fD, fH, fMN, fS] = datevec(fileInfo.datenum);
 % create file name and title prefix
 name_prefix  = [answer{1,1} '-' num2str(fY) '-' num2str(fM) '-' num2str(fD) ...
@@ -382,14 +384,14 @@ A2  = A1(mcrop.top:mcrop.bottom,mcrop.left:mcrop.right,:);
 
 % Assign OUTPUT
 multiband = A2;
+foldername = usavepath_proc;
 filename = [name_prefix '_' num2str(id_rand) '_multiband'];
 save([foldername '/' filename '.mat'], 'multiband','-v7.3') % Save Multiband
 % Export Band Files
-foldername = usavepath_proc;
 for i = 1:nband
     band = A2(:,:,i);
     filename   = [name_prefix '_' num2str(id_rand) '_' num2str(i)];
-    imwrite(band,[foldername '/' filename '.png'])
+    imwrite(band,[foldername '/' filename '.tif'])
 end
 
 % Plot RGB - after alignment (for comparison)
