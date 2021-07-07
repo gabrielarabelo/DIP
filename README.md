@@ -1,14 +1,11 @@
 # DIP
 Drone Image Processing Toolbox (DIP-Toolbox)
 
-DIP_align & DIP_RGB Tools
-
 This Toolbox can be cited as:
 doi:********************
 
 Author:
 Gabriela Rabelo Andrade | gabrielarabelo@gmail.com
-
 Contributor:
 Camila Costa de Amorim
 
@@ -20,6 +17,7 @@ This document presents the manual of the following tools:
 • DIP_align - Tool for band alignment and generation of RGB compositions;
 • DIP_RGB - Tool for generating RGB compositions once the bands have been aligned. Note:features DIP_RGB are already included in DIP_align.
 
+## DIP_align
 These tools were tested on images from the Micasense Altum and Micasense RedEgde cameras. However, the code was designed to work on other models, as long as the files for each band are saved separately, and named according to the standard "<image_prefix>_<band_number>.tif" (example: "IMG_043_1. tif" for Band 1, and "IMG_043_2.tif" for Band 2, and so on).
 
 The DIP_align tool executes the following actions:
@@ -34,7 +32,6 @@ The DIP_align tool executes the following actions:
 The technique used for image alignment is the Intensity-based image registration (imregister), native to Matlab (introduced in R2012a).
 The image enhancement of the RGB compositions is performed using the native tools imreducehaze, imadjust, and stretchlim.
 
-## User Manual
 ### Function Calling
 The DIP_align tool can be used by calling the function DIP_align(). The function has 1 optional input (parameter), which is a struct-type variable and can contain information about the camera, image bands, and optimization parameters for registration alignment and image enhancement.
 The DIP_align tool can be used by calling the DIP_align function. This function has 1 optional input (parameters), which is a variable of type struct containing information about the camera, number of image bands, optimization parameters for image registration, and for image enhancement.
@@ -171,3 +168,4 @@ The program will then plot and save high-resolution images of the RGB Compositio
 After that, in case the user selected the Custom Mode, the user will be prompted to enter any band combinations to generate other custom RGB compositions.
 
 Finally, all the high-resolution images will be saved in the output folder.
+
