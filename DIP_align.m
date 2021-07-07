@@ -277,7 +277,7 @@ figure('Units','normalized','Position',[0.02 0.05 0.95 0.85]);
 
 for i = 1:min(6,nband)
     subplot(2,3,i)
-    imshow(B{i}); title(['B' num2str(i) ' - ' band_specs{1}])
+    imshow(B{i}); title(['B' num2str(i) ' - ' band_specs{i}])
 end
 
 % Save figure

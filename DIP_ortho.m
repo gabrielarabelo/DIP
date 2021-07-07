@@ -1,8 +1,8 @@
-function DIP_RGB(parameters)
+function DIP_ortho(parameters)
 
-% Drone Image Processing: RGB (DIP_RGB)
+% Drone Image Processing: Orthomosaic (DIP_ortho)
 % Multiband Images :: Create RGB Compositions
-% Tested with: Altum & RedEdge
+% Tested with: Altum orthomosaics created with Agisoft Metashape
 % ------------------------------------------------------ %
 % Author:
 % Gabriela Rabelo Andrade 
@@ -14,7 +14,7 @@ function DIP_RGB(parameters)
 
 % % set parameters (example):
 % parameters = struct;
-% parameters.nband             = 6;
+% parameters.alpha             = true;
 % %-% set other parameters (optional)
 % parameters.camera            = 'altum';
 % parameters.customRGB         = [4 5 2 ; 5 4 3];
@@ -22,24 +22,24 @@ function DIP_RGB(parameters)
 
 
 close all; clc
-disp('DIP-RGB :: ')
+disp('DIP-ortho :: ')
 disp('ready to start!')
 
 if (nargin==1); P = parameters;
-    try nband = P.nband;
-    catch; nband = []; disp('[nband] not set');
+    try alpha = P.alpha;
+    catch; alpha = []; disp('[alpha] not set');
     end
 else; P = struct;
-    nband = [];
+    alpha = [];
 end
 
 % ------------------------------------------------------ %
 % Start GUI
 % ------------------------------------------------------ %
 % select file
-msg = 'Select File (only one band required)';
+msg = 'Select File (multilayer TIF)';
 clc; disp(msg);
-[file,path] = uigetfile('*.*', msg);
+[file,path] = uigetfile('*.tif', msg);
 % Find Image Type
 ftype = extractAfter(file,'.');
 % select export folder
@@ -58,15 +58,12 @@ answer = inputdlg(prompt,'s');
 if isempty(answer{1}); answer{1} = 'IMG'; end
 
 
-
-
 % ------------------------------------------------------ %
 % Import Images
 % ------------------------------------------------------ %
 % FIND MULTIBAND FILE PREFIX:
 file_path = path;
-
-try file_name = extractBefore(file,['_1.' ftype]);catch
+file_name = file;
     
     for i = 1:50
         try file_name = extractBefore(file,['_' num2str(i) '.' ftype]);
@@ -214,7 +211,7 @@ end
 figure('Units','normalized','Position',[0.02 0.05 0.95 0.85]);
 for i = 1:min(6,nband)
     subplot(2,3,i)
-    imshow(B{i}); title(['B' num2str(i) ' - ' band_specs{i}])
+    imshow(B{i}); title(['B' num2str(i) ' - ' band_specs{1}])
 end
 pause(2)
 
