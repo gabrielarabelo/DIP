@@ -37,7 +37,7 @@ end
 % Start GUI
 % ------------------------------------------------------ %
 % select file
-msg = 'Select File (Multiband .TIF or the first band of an image)';
+msg = 'Select File (only one band required)';
 clc; disp(msg);
 [file,path] = uigetfile('*.*', msg);
 % Find Image Type
