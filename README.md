@@ -14,7 +14,9 @@ Camila Costa de Amorim
 DIP is a Matlab Toolbox for image processing of Drones.
 
 This document presents the manual of the following tools:
+
 • DIP_align - Tool for band alignment and generation of RGB compositions;
+
 • DIP_RGB - Tool for generating RGB compositions once the bands have been aligned. Note:features DIP_RGB are already included in DIP_align.
 
 ## DIP_align
