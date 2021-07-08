@@ -1,5 +1,13 @@
-# DIP
+# DIP Toolbox
 Drone Image Processing Toolbox (DIP-Toolbox)
+
+## Tools
+• DIP_align
+Align bands of the same image. Useful for images captured with multispectral cameras such as Micasense Altum, Red Edge, Sequoia, among others.
+
+• DIP_RGB
+Create RGB compositions from multispectral images.
+
 
 ## User Manual
 Check the following PDF files:
