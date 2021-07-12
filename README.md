@@ -4,6 +4,7 @@ Drone Image Processing Toolbox (DIP-Toolbox)
 
 Author:
 Gabriela Rabelo Andrade | gabrielarabelo@gmail.com
+
 Contributor: Prof. Camila Costa de Amorim
 
 ## Tools
