@@ -1,6 +1,8 @@
 # DIP Toolbox
 Drone Image Processing Toolbox (DIP-Toolbox)
 
+Tutorial: https://youtu.be/9N0O5Os6J78
+
 
 Author:
 Gabriela Rabelo Andrade | gabrielarabelo@gmail.com
