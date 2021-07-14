@@ -1,14 +1,14 @@
 # DIP Toolbox
 Drone Image Processing Toolbox (DIP-Toolbox)
 
-Tutorial: https://youtu.be/9N0O5Os6J78
-
-
 
 Author:
 Gabriela Rabelo Andrade | gabrielarabelo@gmail.com
 
 Contributor: Prof. Camila Costa de Amorim
+
+## Video Tutorial
+https://youtu.be/9N0O5Os6J78
 
 ## Tools
 • DIP_align - Align bands of the same image. Useful for images captured with multispectral cameras such as Micasense Altum, Red Edge, Sequoia, among others.
