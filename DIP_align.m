@@ -65,6 +65,7 @@ prompt = ['Custom File Name Prefix: [' path file ']'];
 answer = inputdlg(prompt,'s');
 if isempty(answer{1}); answer{1} = 'IMG'; end
 
+
 % ------------------------------------------------------ %
 % Import Images
 % ------------------------------------------------------ %
@@ -123,6 +124,16 @@ try gamma_adj = P.gamma_adj;
 catch; gamma_adj = 0.6;
 end
 
+try ndvi_calc = P.ndvi;
+    ndvi_colormap = make_ndvi_colormap();
+    try ndvi_bands = P.ndvi_bands;
+    catch; ndvi_bands = [4 3];
+    end
+    ndvi_colormap = make_ndvi_colormap();
+catch; ndvi_calc = false;
+    ndvi_bands = [4 3];
+end
+
 try InitialRadius = P.InitialRadius;
 catch; InitialRadius = 0.0002; disp('[InitialRadius] set to default')
 end
@@ -139,8 +150,8 @@ try MaximumIterations = P.MaximumIterations;
 catch; MaximumIterations = 500; disp('[MaximumIterations] set to default')
 end
 
-try imregister_method = P.imregister_method;
-catch; imregister_method = 'rigid';  disp('[imregister_method] set to default')
+try TransformType = P.TransformType;
+catch; TransformType = 'rigid';  disp('[imregister_method] set to default')
 end
 
 try ref_band_align = P.ref_band_align;
@@ -181,8 +192,8 @@ catch
         band_specs  = {'Blue (475nm 32nm)'; ...
             'Green (560nm 27nm)';...
             'Red (668nm 14nm)';...
-            'Red Edge (717nm 12nm)';...
             'Near-IR (842nm 57nm)';...
+            'Red Edge (717nm 12nm)';...
             'LWIR Thermal IR (8-14um)' ...
             };
         % skip band 6 on altum
@@ -196,8 +207,8 @@ catch
         band_specs  = {'Blue (475nm 32nm)'; ...
             'Green (560nm 27nm)';...
             'Red (668nm 14nm)';...
-            'Red Edge (717nm 12nm)';...
             'Near-IR (842nm 57nm)';...
+            'Red Edge (717nm 12nm)';...
             };
     else
         band_specs = cell(nband,1);
@@ -243,8 +254,8 @@ for i = 1:nband
         B{i} = imresize(B{i},'OutputSize',[img_sz(1) img_sz(2)]);
     end
 end
-
 disp('done.');
+
 
 ALLBAND = zeros(img_sz(1),img_sz(2),nband);
 for i = 1:nband
@@ -329,7 +340,7 @@ for i = 1:nband
         pause(0.2)
         
         % adjust registry
-        movingRegistered = imregister(moving, fixed, imregister_method, optimizer, metric);
+        movingRegistered = imregister(moving, fixed, TransformType, optimizer, metric);
         A1(:,:,i) = movingRegistered;
 
         subplot(122); imshowpair(fixed, movingRegistered,'Scaling','joint');
@@ -383,7 +394,7 @@ mcrop.right  = mcrop.right  - safe_margin;
 A2  = A1(mcrop.top:mcrop.bottom,mcrop.left:mcrop.right,:);
 
 % Assign OUTPUT
-multiband = A2;
+multiband = A2; M = multiband;
 foldername = usavepath_proc;
 filename = [name_prefix '_' num2str(id_rand) '_multiband'];
 save([foldername '/' filename '.mat'], 'multiband','-v7.3') % Save Multiband
@@ -487,6 +498,31 @@ disp('done.');
 disp(['check your files on: ' usavepath])
 
 
+if  ndvi_calc
+    nir = double(multiband(:,:,ndvi_bands(1)))/2^img_bit;
+    red = double(multiband(:,:,ndvi_bands(2)))/2^img_bit;
+    ndvi = (nir-red) ./ (nir+red);
+    
+    % plot with pseudo-color
+    caxislim = [-1 1];
+    ndvi = ndvi.'; ndvi  = imrotate(ndvi,90); % rotate to plot like imshow
+    figure('Units','normalized','Position',[0.02 0.05 0.95 0.85]);
+    J = pcolor(ndvi);
+    % tightfig;
+    axis equal
+    shading interp
+    colormap(ndvi_colormap)
+    colorbar
+    caxis([caxislim(1) caxislim(2)])
+    pause(2)
+    title([name_prefix ' ' 'NDVI' ])
+    % save figure
+    foldername = usavepath;
+    filename = [name_prefix '_' num2str(id_rand) '_NDVI'];
+    imwrite(J,[foldername '/' filename '.tif']) % Save High Resolution Tif
+end
+
+%%
 % ---------------------------------------- %
 % Custom Mode :: Custom Input Combinations
 % ---------------------------------------- %
@@ -569,6 +605,16 @@ disp('all done.');
 disp(['check your files on: ' usavepath])
 close all;
 
+
+% nested functions
+    function ndvi_colormap = make_ndvi_colormap()
+        % make_ndvi_colormap.m - create NDVI colormap and demonstrate lookup conversion from grayscale to RGB
+        % HJSIII, 19.10.25
+        ndvi_map_r = [ (33:80)  80*ones(1,79)  (80:-1:0)  zeros(1,48) ]' /80;  % red
+        ndvi_map_g = flipud( ndvi_map_r );                                     % green
+        ndvi_map_b = zeros( size( ndvi_map_r ) );                              % blue
+        ndvi_colormap = [ ndvi_map_r  ndvi_map_g  ndvi_map_b ];
+    end
 
 
 end
